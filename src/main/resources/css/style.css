@@ -1,0 +1,23 @@
+/* 缩略图容器样式 */
+.thumbnail-box {
+    -fx-padding: 8;
+    -fx-background-color: #ffffff;
+    -fx-border-color: #dddddd;
+    -fx-border-width: 1;
+    -fx-border-radius: 5;
+    -fx-background-radius: 5;
+    -fx-alignment: center;
+    -fx-cursor: hand;
+}
+
+/* 选中状态样式 */
+.thumbnail-box.selected {
+    -fx-background-color: #e3f2fd;
+    -fx-border-color: #2196f3;
+    -fx-border-width: 2;
+}
+
+/* 鼠标悬浮效果 */
+.thumbnail-box:hover {
+    -fx-effect: dropshadow(gaussian, #666666, 5, 0, 0, 0);
+}

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.image.ImageView?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.photo.controller.SlideShowController">
+    <!-- 顶部信息栏 -->
+    <top>
+        <HBox spacing="20" style="-fx-background-color: #f0f0f0; -fx-padding: 10px;">
+            <Label fx:id="pageLabel" style="-fx-font-size: 14px;"/>
+            <Label fx:id="tipLabel" HBox.hgrow="ALWAYS" style="-fx-font-size: 12px;"/>
+        </HBox>
+    </top>
+
+    <!-- 中间图片展示区 -->
+    <center>
+        <StackPane style="-fx-padding: 20px;">
+            <ImageView fx:id="imageView" preserveRatio="true" />
+        </StackPane>
+    </center>
+
+    <!-- 底部操作栏 -->
+    <bottom>
+        <HBox spacing="15" alignment="CENTER" style="-fx-background-color: #f0f0f0; -fx-padding: 15px;">
+            <Button fx:id="prevBtn" text="上一张" prefWidth="100"/>
+            <Button fx:id="nextBtn" text="下一张" prefWidth="100"/>
+            <Separator orientation="VERTICAL" prefHeight="30"/>
+            <Button fx:id="zoomOutBtn" text="缩小" prefWidth="80"/>
+            <Button fx:id="zoomInBtn" text="放大" prefWidth="80"/>
+            <Separator orientation="VERTICAL" prefHeight="30"/>
+            <Button fx:id="playBtn" text="自动播放" prefWidth="100"/>
+            <Button fx:id="stopBtn" text="停止播放" prefWidth="100"/>
+        </HBox>
+    </bottom>
+</BorderPane>

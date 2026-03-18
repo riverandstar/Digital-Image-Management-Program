@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.photo.controller.MainController">
+    <!-- 顶部工具栏 -->
+    <top>
+        <HBox spacing="10" style="-fx-background-color: #f0f0f0; -fx-padding: 10px;">
+            <Label text="电子图片管理程序" style="-fx-font-size: 18px;"/>
+            <Pane HBox.hgrow="ALWAYS"/>
+            <Button fx:id="slideShowBtn" text="幻灯片播放" prefWidth="120"/>
+            <Button text="复制" onAction="#copySelectedImages" prefWidth="80"/>
+            <Button text="粘贴" onAction="#pasteImages" prefWidth="80"/>
+            <Button text="重命名" onAction="#renameSelectedImages" prefWidth="80"/>
+            <Button text="删除" onAction="#deleteSelectedImages" prefWidth="80"/>
+        </HBox>
+    </top>
+
+    <!-- 中间主体区域 -->
+    <center>
+        <SplitPane dividerPositions="0.2">
+            <!-- 左侧目录树 -->
+            <TreeView fx:id="directoryTree" prefWidth="200" style="-fx-padding: 5px;"/>
+
+            <!-- 右侧图片预览区 -->
+            <BorderPane>
+                <top>
+                    <Label fx:id="dirInfoLabel" style="-fx-font-size: 12px; -fx-padding: 5px;"/>
+                </top>
+                <center>
+                    <ScrollPane fitToWidth="true" fitToHeight="true">
+                        <FlowPane fx:id="thumbnailPane" hgap="15" vgap="15" style="-fx-padding: 10px;"/>
+                    </ScrollPane>
+                </center>
+            </BorderPane>
+        </SplitPane>
+    </center>
+
+    <!-- 底部提示信息区域 -->
+    <bottom>
+        <Label fx:id="tipLabel" style="-fx-background-color: #e8e8e8; -fx-pref-height: 30px; -fx-padding: 10px;" />
+    </bottom>
+</BorderPane>
