@@ -1,7 +1,7 @@
 package com.photo.controller;
 
 import com.photo.MainApp;
-import com.photo.model.ImageFile;
+import com.photo.model.MediaFile;
 import com.photo.utils.FileUtils;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -41,9 +41,9 @@ public class MainController implements Initializable {
     @FXML
     private Button slideShowBtn;
 
-    // 核心数据
+    // 核心数据：替换ImageFile为MediaFile
     private File currentDir;
-    private final ObservableList<ImageFile> currentImageList = FXCollections.observableArrayList();
+    private final ObservableList<MediaFile> currentMediaList = FXCollections.observableArrayList();
     private final ObservableList<VBox> selectedThumbnails = FXCollections.observableArrayList();
     private final List<File> copiedFiles = new ArrayList<>();
 
@@ -51,12 +51,18 @@ public class MainController implements Initializable {
     public void initialize(URL url, ResourceBundle resourceBundle) {
         initDirectoryTree();
         initThumbnailPaneEvent();
-        slideShowBtn.setOnAction(e -> openSlideShow(0));
+        slideShowBtn.setOnAction(e -> {
+            // 修复幻灯片按钮点击：选中第一个文件打开
+            if (!currentMediaList.isEmpty()) {
+                openSlideShow(0);
+            } else {
+                tipLabel.setText("当前目录无媒体文件，无法打开幻灯片");
+            }
+        });
     }
 
-    // 初始化目录树（只显示文件夹）
+    // 初始化目录树（逻辑不变）
     private void initDirectoryTree() {
-        // 获取系统根目录
         File[] roots = File.listRoots();
         TreeItem<File> rootItem = new TreeItem<>(null);
         rootItem.setExpanded(true);
@@ -70,20 +76,18 @@ public class MainController implements Initializable {
 
         directoryTree.setRoot(rootItem);
         directoryTree.setShowRoot(false);
-        // 目录点击事件
         directoryTree.getSelectionModel().selectedItemProperty().addListener(
                 (observable, oldValue, newValue) -> {
                     if (newValue != null && newValue.getValue() != null) {
-                        loadDirectoryImages(newValue.getValue());
+                        loadDirectoryMedia(newValue.getValue());
                     }
                 }
         );
     }
 
-    // 递归创建目录树节点
+    // 递归创建目录树节点（逻辑不变）
     private TreeItem<File> createTreeItem(File file) {
         return new TreeItem<>(file) {
-            // 懒加载，优化性能
             private boolean isLoaded = false;
 
             @Override
@@ -102,7 +106,7 @@ public class MainController implements Initializable {
         };
     }
 
-    // 加载子目录（只显示文件夹）
+    // 加载子目录（逻辑不变）
     private List<TreeItem<File>> loadChildren(TreeItem<File> parentItem) {
         List<TreeItem<File>> children = new ArrayList<>();
         File file = parentItem.getValue();
@@ -117,10 +121,10 @@ public class MainController implements Initializable {
         return children;
     }
 
-    // 加载指定目录的所有图片
-    private void loadDirectoryImages(File dir) {
+    // 加载目录下的所有媒体文件（图片+视频）
+    private void loadDirectoryMedia(File dir) {
         this.currentDir = dir;
-        currentImageList.clear();
+        currentMediaList.clear();
         thumbnailPane.getChildren().clear();
         selectedThumbnails.clear();
 
@@ -130,41 +134,39 @@ public class MainController implements Initializable {
             return;
         }
 
-        // 先打印目录信息，排查问题
         System.out.println("正在加载目录: " + dir.getAbsolutePath());
 
-        // 筛选支持的图片文件
         File[] allFiles = dir.listFiles();
         if (allFiles == null || allFiles.length == 0) {
-            dirInfoLabel.setText("当前目录：" + dir.getAbsolutePath() + " | 图片数量：0");
+            dirInfoLabel.setText("当前目录：" + dir.getAbsolutePath() + " | 媒体文件数量：0");
             tipLabel.setText("当前目录为空，无任何文件");
             System.out.println("目录为空，无任何文件");
             return;
         }
 
-        // 筛选图片文件
-        List<File> imageFileList = Arrays.stream(allFiles)
-                .filter(FileUtils::isImageFile)
+        // 筛选媒体文件（图片+视频）
+        List<File> mediaFileList = Arrays.stream(allFiles)
+                .filter(FileUtils::isMediaFile)
                 .toList();
 
-        System.out.println("目录中识别到的图片文件数量: " + imageFileList.size());
+        System.out.println("目录中识别到的媒体文件数量: " + mediaFileList.size());
 
-        if (imageFileList.isEmpty()) {
-            dirInfoLabel.setText("当前目录：" + dir.getAbsolutePath() + " | 图片数量：0");
-            tipLabel.setText("当前目录无支持的图片文件（支持格式：JPG/JPEG/PNG/GIF/BMP）");
+        if (mediaFileList.isEmpty()) {
+            dirInfoLabel.setText("当前目录：" + dir.getAbsolutePath() + " | 媒体文件数量：0");
+            tipLabel.setText("当前目录无支持的媒体文件（图片：JPG/PNG等；视频：MP4/AVI等）");
             return;
         }
 
-        // 加载图片到列表
+        // 加载媒体文件到列表
         long totalSize = 0;
         int successCount = 0;
         int failCount = 0;
 
-        for (File file : imageFileList) {
-            ImageFile imageFile = new ImageFile(file);
-            if (imageFile.getThumbnail() != null) {
-                currentImageList.add(imageFile);
-                totalSize += imageFile.getFileSize();
+        for (File file : mediaFileList) {
+            MediaFile mediaFile = new MediaFile(file);
+            if (mediaFile.getThumbnail() != null) {
+                currentMediaList.add(mediaFile);
+                totalSize += mediaFile.getFileSize();
                 successCount++;
             } else {
                 failCount++;
@@ -174,67 +176,74 @@ public class MainController implements Initializable {
         // 渲染缩略图
         renderThumbnails();
         // 更新信息
-        dirInfoLabel.setText("当前目录：" + dir.getAbsolutePath() + " | 图片数量：" + currentImageList.size());
-        tipLabel.setText("加载完成，成功加载" + successCount + "张图片，失败" + failCount + "张，总大小：" + FileUtils.formatFileSize(totalSize));
-        System.out.println("最终加载成功: " + successCount + "张，失败: " + failCount + "张");
+        dirInfoLabel.setText("当前目录：" + dir.getAbsolutePath() + " | 媒体文件数量：" + currentMediaList.size());
+        tipLabel.setText("加载完成，成功加载" + successCount + "个媒体文件，失败" + failCount + "个，总大小：" + FileUtils.formatFileSize(totalSize));
+        System.out.println("最终加载成功: " + successCount + "个，失败: " + failCount + "个");
     }
 
-    // 渲染缩略图到预览区
+    // 渲染缩略图（修复：确保每个缩略图正确绑定事件）
     private void renderThumbnails() {
         thumbnailPane.getChildren().clear();
-        for (ImageFile imageFile : currentImageList) {
-            // 每个缩略图的容器
+        for (int i = 0; i < currentMediaList.size(); i++) {
+            MediaFile mediaFile = currentMediaList.get(i);
             VBox thumbnailBox = new VBox(5);
             thumbnailBox.getStyleClass().add("thumbnail-box");
-            thumbnailBox.setUserData(imageFile);
+            thumbnailBox.setUserData(mediaFile);
+            // 存储索引，避免双击时获取索引错误
+            thumbnailBox.setId(String.valueOf(i));
 
-            // 图片视图
-            ImageView imageView = new ImageView(imageFile.getThumbnail());
+            ImageView imageView = new ImageView(mediaFile.getThumbnail());
             imageView.setPreserveRatio(true);
             imageView.setFitWidth(FileUtils.THUMBNAIL_WIDTH);
             imageView.setFitHeight(FileUtils.THUMBNAIL_HEIGHT);
 
-            // 文件名标签
-            Label nameLabel = new Label(imageFile.getFileName());
+            Label nameLabel = new Label(mediaFile.getFileName());
             nameLabel.setMaxWidth(FileUtils.THUMBNAIL_WIDTH);
             nameLabel.setWrapText(true);
 
             thumbnailBox.getChildren().addAll(imageView, nameLabel);
-            // 绑定点击事件
-            bindThumbnailEvent(thumbnailBox);
-            // 绑定右键菜单
+            // 强制绑定事件（修复双击无响应核心）
+            bindThumbnailEvent(thumbnailBox, i);
             bindContextMenu(thumbnailBox);
 
             thumbnailPane.getChildren().add(thumbnailBox);
         }
     }
 
-    // 绑定缩略图点击事件（单选、多选、双击）
-    private void bindThumbnailEvent(VBox thumbnailBox) {
+    // 修复：缩略图点击事件（新增索引参数，确保双击能正确获取索引）
+    private void bindThumbnailEvent(VBox thumbnailBox, int mediaIndex) {
+        // 修复：确保点击事件优先级正确
+        thumbnailBox.setOnMouseClicked(null);
         thumbnailBox.setOnMouseClicked(e -> {
-            // 左键点击
             if (e.getButton() == MouseButton.PRIMARY) {
-                // Ctrl+点击 多选
-                if (e.isControlDown()) {
-                    toggleThumbnailSelected(thumbnailBox);
+                // 修复：先处理选中逻辑
+                if (e.getClickCount() == 1) {
+                    if (e.isControlDown()) {
+                        toggleThumbnailSelected(thumbnailBox);
+                    } else {
+                        clearAllSelected();
+                        setThumbnailSelected(thumbnailBox, true);
+                    }
+                    tipLabel.setText("已选中 " + selectedThumbnails.size() + " 个媒体文件");
                 }
-                // 双击打开幻灯片
+                // 修复：双击单独处理，确保触发
                 else if (e.getClickCount() == 2) {
-                    int index = thumbnailPane.getChildren().indexOf(thumbnailBox);
-                    openSlideShow(index);
+                    System.out.println("双击媒体文件，索引：" + mediaIndex);
+                    openSlideShow(mediaIndex);
                 }
-                // 单选
-                else {
-                    clearAllSelected();
-                    setThumbnailSelected(thumbnailBox, true);
-                }
-                // 更新选中提示
-                tipLabel.setText("已选中 " + selectedThumbnails.size() + " 张图片");
             }
+        });
+
+        // 修复：防止子组件拦截点击事件
+        thumbnailBox.getChildren().forEach(child -> {
+            child.setOnMouseClicked(e -> {
+                e.consume();
+                thumbnailBox.fireEvent(e);
+            });
         });
     }
 
-    // 初始化预览区空白点击事件（取消选中）
+    // 初始化预览区事件（逻辑不变）
     private void initThumbnailPaneEvent() {
         thumbnailPane.setOnMouseClicked(e -> {
             if (e.getTarget() == thumbnailPane) {
@@ -242,12 +251,10 @@ public class MainController implements Initializable {
                 tipLabel.setText("已取消所有选中");
             }
         });
-
-        // 框选多选功能
         thumbnailPane.setOnDragDetected(e -> thumbnailPane.startFullDrag());
     }
 
-    // 设置缩略图选中状态
+    // 设置缩略图选中状态（逻辑不变）
     private void setThumbnailSelected(VBox thumbnailBox, boolean selected) {
         if (selected) {
             if (!selectedThumbnails.contains(thumbnailBox)) {
@@ -260,12 +267,12 @@ public class MainController implements Initializable {
         }
     }
 
-    // 切换选中状态
+    // 切换选中状态（逻辑不变）
     private void toggleThumbnailSelected(VBox thumbnailBox) {
         setThumbnailSelected(thumbnailBox, !selectedThumbnails.contains(thumbnailBox));
     }
 
-    // 清除所有选中
+    // 清除所有选中（逻辑不变）
     private void clearAllSelected() {
         for (VBox box : selectedThumbnails) {
             box.getStyleClass().remove("selected");
@@ -273,54 +280,49 @@ public class MainController implements Initializable {
         selectedThumbnails.clear();
     }
 
-    // 绑定右键菜单
+    // 右键菜单（逻辑不变，仅替换ImageFile为MediaFile）
     private void bindContextMenu(VBox thumbnailBox) {
         ContextMenu contextMenu = new ContextMenu();
         MenuItem copyItem = new MenuItem("复制");
         MenuItem renameItem = new MenuItem("重命名");
         MenuItem deleteItem = new MenuItem("删除");
 
-        // 复制事件
-        copyItem.setOnAction(e -> copySelectedImages());
-        // 重命名事件
-        renameItem.setOnAction(e -> renameSelectedImages());
-        // 删除事件
-        deleteItem.setOnAction(e -> deleteSelectedImages());
+        copyItem.setOnAction(e -> copySelectedMedia());
+        renameItem.setOnAction(e -> renameSelectedMedia());
+        deleteItem.setOnAction(e -> deleteSelectedMedia());
 
         contextMenu.getItems().addAll(copyItem, renameItem, deleteItem);
         thumbnailBox.setOnContextMenuRequested(e -> {
-            // 右键选中当前缩略图
             if (!selectedThumbnails.contains(thumbnailBox)) {
                 clearAllSelected();
                 setThumbnailSelected(thumbnailBox, true);
-                tipLabel.setText("已选中 " + selectedThumbnails.size() + " 张图片");
+                tipLabel.setText("已选中 " + selectedThumbnails.size() + " 个媒体文件");
             }
             contextMenu.show(thumbnailBox, e.getScreenX(), e.getScreenY());
         });
     }
 
-    // 复制选中图片
+    // 复制选中媒体文件（替换ImageFile为MediaFile）
     @FXML
-    public void copySelectedImages() {
+    public void copySelectedMedia() {
         if (selectedThumbnails.isEmpty()) {
-            tipLabel.setText("请先选择要复制的图片");
+            tipLabel.setText("请先选择要复制的媒体文件");
             return;
         }
         copiedFiles.clear();
         for (VBox box : selectedThumbnails) {
-            ImageFile imageFile = (ImageFile) box.getUserData();
-            copiedFiles.add(imageFile.getFile());
+            MediaFile mediaFile = (MediaFile) box.getUserData();
+            copiedFiles.add(mediaFile.getFile());
         }
-        // 系统剪贴板同步
         Clipboard clipboard = Clipboard.getSystemClipboard();
         ClipboardContent content = new ClipboardContent();
         content.putFiles(copiedFiles);
         clipboard.setContent(content);
 
-        tipLabel.setText("已复制 " + copiedFiles.size() + " 张图片");
+        tipLabel.setText("已复制 " + copiedFiles.size() + " 个媒体文件");
     }
 
-    // 粘贴图片
+    // 粘贴媒体文件（逻辑不变）
     @FXML
     public void pasteImages() {
         if (currentDir == null || !currentDir.isDirectory()) {
@@ -328,7 +330,7 @@ public class MainController implements Initializable {
             return;
         }
         if (copiedFiles.isEmpty()) {
-            tipLabel.setText("没有可粘贴的图片");
+            tipLabel.setText("没有可粘贴的媒体文件");
             return;
         }
 
@@ -341,24 +343,23 @@ public class MainController implements Initializable {
                 System.err.println("粘贴文件失败: " + e.getMessage());
             }
         }
-        // 刷新目录
-        loadDirectoryImages(currentDir);
-        tipLabel.setText("粘贴完成，成功粘贴 " + successCount + " 张图片");
+        loadDirectoryMedia(currentDir);
+        tipLabel.setText("粘贴完成，成功粘贴 " + successCount + " 个媒体文件");
     }
 
-    // 重命名选中图片
+    // 重命名选中媒体文件（替换ImageFile为MediaFile）
     @FXML
-    public void renameSelectedImages() {
+    public void renameSelectedMedia() {
         if (selectedThumbnails.isEmpty()) {
-            tipLabel.setText("请先选择要重命名的图片");
+            tipLabel.setText("请先选择要重命名的媒体文件");
             return;
         }
 
         // 单选重命名
         if (selectedThumbnails.size() == 1) {
-            ImageFile imageFile = (ImageFile) selectedThumbnails.get(0).getUserData();
-            TextInputDialog dialog = new TextInputDialog(FileUtils.getFileNameWithoutExtension(imageFile.getFileName()));
-            dialog.setTitle("重命名图片");
+            MediaFile mediaFile = (MediaFile) selectedThumbnails.get(0).getUserData();
+            TextInputDialog dialog = new TextInputDialog(FileUtils.getFileNameWithoutExtension(mediaFile.getFileName()));
+            dialog.setTitle("重命名媒体文件");
             dialog.setHeaderText("请输入新的文件名（扩展名不变）");
             dialog.setContentText("文件名：");
 
@@ -367,26 +368,23 @@ public class MainController implements Initializable {
                     tipLabel.setText("文件名不能为空");
                     return;
                 }
-                String ext = FileUtils.getFileExtension(imageFile.getFileName());
-                File newFile = new File(imageFile.getFile().getParentFile(), newName + ext);
-                if (imageFile.getFile().renameTo(newFile)) {
-                    loadDirectoryImages(currentDir);
+                String ext = FileUtils.getFileExtension(mediaFile.getFileName());
+                File newFile = new File(mediaFile.getFile().getParentFile(), newName + ext);
+                if (mediaFile.getFile().renameTo(newFile)) {
+                    loadDirectoryMedia(currentDir);
                     tipLabel.setText("重命名成功");
                 } else {
                     tipLabel.setText("重命名失败，请检查文件名是否合法");
                 }
             });
-        }
-        // 多选批量重命名
-        else {
-            // 批量重命名对话框
+        } else {
+            // 批量重命名（逻辑不变，仅替换ImageFile为MediaFile）
             Dialog<ButtonType> dialog = new Dialog<>();
             dialog.setTitle("批量重命名");
             dialog.setHeaderText("请输入批量重命名规则");
 
-            // 对话框内容
             VBox content = new VBox(10);
-            TextField prefixField = new TextField("NewImage");
+            TextField prefixField = new TextField("NewMedia");
             TextField startNumField = new TextField("1");
             TextField digitField = new TextField("4");
 
@@ -410,18 +408,17 @@ public class MainController implements Initializable {
                             return;
                         }
 
-                        // 执行批量重命名
                         int currentNum = startNum;
                         int successCount = 0;
                         for (VBox box : selectedThumbnails) {
-                            ImageFile imageFile = (ImageFile) box.getUserData();
-                            if (FileUtils.batchRenameFile(imageFile.getFile(), prefix, currentNum, digitCount)) {
+                            MediaFile mediaFile = (MediaFile) box.getUserData();
+                            if (FileUtils.batchRenameFile(mediaFile.getFile(), prefix, currentNum, digitCount)) {
                                 successCount++;
                             }
                             currentNum++;
                         }
-                        loadDirectoryImages(currentDir);
-                        tipLabel.setText("批量重命名完成，成功 " + successCount + " 张，失败 " + (selectedThumbnails.size() - successCount) + " 张");
+                        loadDirectoryMedia(currentDir);
+                        tipLabel.setText("批量重命名完成，成功 " + successCount + " 个，失败 " + (selectedThumbnails.size() - successCount) + " 个");
                     } catch (NumberFormatException e) {
                         tipLabel.setText("编号必须为数字，请检查输入");
                     }
@@ -430,62 +427,86 @@ public class MainController implements Initializable {
         }
     }
 
-    // 删除选中图片
+    // 删除选中媒体文件（替换ImageFile为MediaFile）
     @FXML
-    public void deleteSelectedImages() {
+    public void deleteSelectedMedia() {
         if (selectedThumbnails.isEmpty()) {
-            tipLabel.setText("请先选择要删除的图片");
+            tipLabel.setText("请先选择要删除的媒体文件");
             return;
         }
 
-        // 确认对话框
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("删除确认");
-        alert.setHeaderText("您确定要删除选中的 " + selectedThumbnails.size() + " 张图片吗？");
+        alert.setHeaderText("您确定要删除选中的 " + selectedThumbnails.size() + " 个媒体文件吗？");
         alert.setContentText("此操作将永久删除文件，无法恢复！");
 
         alert.showAndWait().ifPresent(buttonType -> {
             if (buttonType == ButtonType.OK) {
                 int successCount = 0;
                 for (VBox box : selectedThumbnails) {
-                    ImageFile imageFile = (ImageFile) box.getUserData();
+                    MediaFile mediaFile = (MediaFile) box.getUserData();
                     try {
-                        Files.delete(imageFile.getFile().toPath());
+                        Files.delete(mediaFile.getFile().toPath());
                         successCount++;
                     } catch (IOException e) {
                         System.err.println("删除文件失败: " + e.getMessage());
                     }
                 }
-                loadDirectoryImages(currentDir);
-                tipLabel.setText("删除完成，成功删除 " + successCount + " 张图片");
+                loadDirectoryMedia(currentDir);
+                tipLabel.setText("删除完成，成功删除 " + successCount + " 个媒体文件");
             }
         });
     }
 
-    // 打开幻灯片窗口
+    // 修复：打开幻灯片窗口（增加异常处理+日志）
     private void openSlideShow(int currentIndex) {
-        if (currentImageList.isEmpty()) {
-            tipLabel.setText("当前目录无图片，无法打开幻灯片");
+        // 边界检查
+        if (currentMediaList.isEmpty()) {
+            tipLabel.setText("无媒体文件可预览");
             return;
+        }
+        if (currentIndex < 0 || currentIndex >= currentMediaList.size()) {
+            currentIndex = 0;
         }
 
         try {
-            FXMLLoader fxmlLoader = new FXMLLoader(MainApp.class.getResource("/fxml/slideshow-view.fxml"));
-            Scene scene = new Scene(fxmlLoader.load(), 1200, 800);
-            Stage slideStage = new Stage();
-            slideStage.setTitle("幻灯片播放");
-            slideStage.setScene(scene);
-            slideStage.initModality(Modality.APPLICATION_MODAL);
-            slideStage.initOwner(MainApp.getPrimaryStage());
+            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/fxml/slideshow-view.fxml"));
+            // 修复：确保FXML资源加载成功
+            if (fxmlLoader.getLocation() == null) {
+                tipLabel.setText("FXML文件未找到：/fxml/slideshow-view.fxml");
+                return;
+            }
+            Scene scene = new Scene(fxmlLoader.load(), 1150, 750);
+            Stage stage = new Stage();
+            stage.setTitle("图片&视频预览");
+            stage.setScene(scene);
+            stage.initModality(Modality.APPLICATION_MODAL);
+            // 修复：绑定主窗口，防止窗口层级问题
+            stage.initOwner(MainApp.getPrimaryStage());
 
-            // 传递数据给幻灯片控制器
-            SlideShowController controller = fxmlLoader.getController();
-            controller.setImageList(currentImageList, currentIndex);
+            SlideShowController c = fxmlLoader.getController();
+            c.setMediaList(new ArrayList<>(currentMediaList), currentIndex);
 
-            slideStage.show();
-        } catch (IOException e) {
-            System.err.println("打开幻灯片失败: " + e.getMessage());
-            tipLabel.setText("打开幻灯片失败");
+            System.out.println("打开幻灯片预览，当前索引：" + currentIndex);
+            stage.show();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            tipLabel.setText("打开预览失败：" + ex.getMessage());
         }
+    }
+
+    @FXML
+    public void copySelectedImages() {
+        copySelectedMedia();
+    }
+
+    @FXML
+    public void renameSelectedImages() {
+        renameSelectedMedia();
+    }
+
+    @FXML
+    public void deleteSelectedImages() {
+        deleteSelectedMedia();
     }
 }

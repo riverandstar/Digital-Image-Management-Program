@@ -1,14 +1,18 @@
 package com.photo.controller;
 
-import com.photo.model.ImageFile;
-import javafx.animation.KeyFrame;
+import com.photo.model.MediaFile;
 import javafx.animation.Timeline;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.StackPane;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
+import javafx.scene.media.MediaView;
 import javafx.util.Duration;
 
 import java.net.URL;
@@ -16,158 +20,154 @@ import java.util.List;
 import java.util.ResourceBundle;
 
 public class SlideShowController implements Initializable {
-    // 界面组件绑定
-    @FXML
-    private ImageView imageView;
-    @FXML
-    private Label tipLabel;
-    @FXML
-    private Label pageLabel;
-    @FXML
-    private Button prevBtn;
-    @FXML
-    private Button nextBtn;
-    @FXML
-    private Button zoomInBtn;
-    @FXML
-    private Button zoomOutBtn;
-    @FXML
-    private Button playBtn;
-    @FXML
-    private Button stopBtn;
 
-    // 核心数据
-    private List<ImageFile> imageList;
+    @FXML private StackPane mediaContainer;
+    @FXML private ImageView imageView;
+    @FXML private MediaView mediaView;
+    @FXML private Label pageLabel;
+    @FXML private Label tipLabel;
+    @FXML private Button prevBtn;
+    @FXML private Button nextBtn;
+    @FXML private Button zoomInBtn;
+    @FXML private Button zoomOutBtn;
+    @FXML private Button playBtn;
+    @FXML private Button stopBtn;
+    @FXML private Button videoPlayPauseBtn;
+    @FXML private Slider videoProgressSlider;
+    @FXML private Slider volumeSlider;
+
+    private List<MediaFile> mediaList;
     private int currentIndex;
-    private double currentScale = 1.0;
-    private final double SCALE_STEP = 0.2;
-    private Timeline playTimeline;
-    private boolean isPlaying = false;
+    private double scale = 1.0;
+    private static final double MAX_SCALE = 3.0;
+    private Timeline autoPlay;
+    private MediaPlayer mediaPlayer;
 
     @Override
-    public void initialize(URL url, ResourceBundle resourceBundle) {
-        // 初始化自动播放时间线，1秒切换一次
-        playTimeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> autoPlayNext()));
-        playTimeline.setCycleCount(Timeline.INDEFINITE);
-        stopBtn.setDisable(true);
+    public void initialize(URL url, ResourceBundle rb) {
+        mediaView.setVisible(false);
+        imageView.setVisible(true);
 
-        // 按钮事件绑定
-        prevBtn.setOnAction(e -> showPrevImage());
-        nextBtn.setOnAction(e -> showNextImage());
-        zoomInBtn.setOnAction(e -> zoomIn());
-        zoomOutBtn.setOnAction(e -> zoomOut());
-        playBtn.setOnAction(e -> startPlay());
-        stopBtn.setOnAction(e -> stopPlay());
-    }
-
-    // 接收主界面传递的图片列表和当前索引
-    public void setImageList(List<ImageFile> imageList, int currentIndex) {
-        this.imageList = imageList;
-        this.currentIndex = currentIndex;
-        showCurrentImage();
-    }
-
-    // 显示当前索引的图片
-    private void showCurrentImage() {
-        if (imageList == null || imageList.isEmpty()) return;
-
-        ImageFile currentImage = imageList.get(currentIndex);
-        Image image = new Image(currentImage.getFile().toURI().toString());
-        imageView.setImage(image);
-        // 重置缩放
-        currentScale = 1.0;
-        imageView.setScaleX(currentScale);
-        imageView.setScaleY(currentScale);
-        // 自适应窗口
-        imageView.setFitWidth(imageView.getScene().getWidth() - 100);
-        imageView.setFitHeight(imageView.getScene().getHeight() - 100);
         imageView.setPreserveRatio(true);
+        mediaView.setPreserveRatio(true);
 
-        // 更新页码和提示
-        pageLabel.setText((currentIndex + 1) + " / " + imageList.size());
-        tipLabel.setText("当前图片：" + currentImage.getFileName() + " | 大小：" + currentImage.getFile().length() / 1024 + " KB");
+        mediaContainer.widthProperty().addListener((obs, oldVal, newVal) -> adjustMediaSize());
+        mediaContainer.heightProperty().addListener((obs, oldVal, newVal) -> adjustMediaSize());
 
-        // 首尾按钮控制
-        prevBtn.setDisable(currentIndex == 0);
-        nextBtn.setDisable(currentIndex == imageList.size() - 1);
+        autoPlay = new Timeline(new javafx.animation.KeyFrame(Duration.seconds(3), e -> next()));
+        autoPlay.setCycleCount(Timeline.INDEFINITE);
 
-        // 首尾提示
-        if (currentIndex == 0) {
-            tipLabel.setText(tipLabel.getText() + " | 已经是第一张图片");
-        } else if (currentIndex == imageList.size() - 1) {
-            tipLabel.setText(tipLabel.getText() + " | 已经是最后一张图片");
-        }
+        prevBtn.setOnAction(e -> prev());
+        nextBtn.setOnAction(e -> next());
+
+        zoomInBtn.setOnAction(e -> {
+            if (scale < MAX_SCALE) {
+                scale += 0.1;
+                adjustMediaSize();
+            }
+        });
+        zoomOutBtn.setOnAction(e -> {
+            scale = Math.max(0.5, scale - 0.1);
+            adjustMediaSize();
+        });
+
+        playBtn.setOnAction(e -> {
+            autoPlay.play();
+            tipLabel.setText("已开启自动播放");
+        });
+        stopBtn.setOnAction(e -> {
+            autoPlay.stop();
+            if (mediaPlayer != null) mediaPlayer.pause();
+            tipLabel.setText("已停止");
+        });
+
+        videoPlayPauseBtn.setOnAction(e -> {
+            if (mediaPlayer != null) {
+                if (mediaPlayer.getStatus() == MediaPlayer.Status.PLAYING) {
+                    mediaPlayer.pause();
+                } else {
+                    mediaPlayer.play();
+                }
+            }
+        });
+
+        videoProgressSlider.valueProperty().addListener((obs, old, newVal) -> {
+            if (videoProgressSlider.isValueChanging() && mediaPlayer != null) {
+                double total = mediaPlayer.getTotalDuration().toSeconds();
+                mediaPlayer.seek(Duration.seconds(total * newVal.doubleValue() / 100));
+            }
+        });
+
+        volumeSlider.setValue(0.8);
+        volumeSlider.valueProperty().addListener((obs, old, newVal) -> {
+            if (mediaPlayer != null) {
+                mediaPlayer.setVolume(newVal.doubleValue());
+            }
+        });
     }
 
-    // 上一张图片
-    private void showPrevImage() {
+    public void setMediaList(List<MediaFile> list, int index) {
+        if (list == null || list.isEmpty()) return;
+        this.mediaList = list;
+        this.currentIndex = Math.max(0, Math.min(index, list.size() - 1));
+        show();
+    }
+
+    private void show() {
+        // ====================== 【重要修改】切换时自动关闭上一个视频 ======================
+        closeMedia(); // 每次切换前强制关闭视频
+
+        MediaFile mf = mediaList.get(currentIndex);
+        pageLabel.setText((currentIndex + 1) + " / " + mediaList.size());
+        tipLabel.setText("文件：" + mf.getFileName());
+
+        if (mf.isImage()) {
+            imageView.setVisible(true);
+            mediaView.setVisible(false);
+            imageView.setImage(new Image(mf.getFile().toURI().toString(), true));
+        } else {
+            imageView.setVisible(false);
+            mediaView.setVisible(true);
+            Media media = new Media(mf.getFile().toURI().toString());
+            mediaPlayer = new MediaPlayer(media);
+            mediaView.setMediaPlayer(mediaPlayer);
+            mediaPlayer.play();
+        }
+        adjustMediaSize();
+    }
+
+    private void adjustMediaSize() {
+        double w = mediaContainer.getWidth() * scale;
+        double h = mediaContainer.getHeight() * scale;
+        imageView.setFitWidth(w);
+        imageView.setFitHeight(h);
+        mediaView.setFitWidth(w);
+        mediaView.setFitHeight(h);
+    }
+
+    // ====================== 上一个（自动关闭视频） ======================
+    private void prev() {
         if (currentIndex > 0) {
             currentIndex--;
-            showCurrentImage();
+            show();
         }
     }
 
-    // 下一张图片
-    private void showNextImage() {
-        if (currentIndex < imageList.size() - 1) {
+    // ====================== 下一个（自动关闭视频） ======================
+    private void next() {
+        if (currentIndex < mediaList.size() - 1) {
             currentIndex++;
-            showCurrentImage();
+            show();
         }
     }
 
-    // 放大图片
-    private void zoomIn() {
-        currentScale += SCALE_STEP;
-        imageView.setScaleX(currentScale);
-        imageView.setScaleY(currentScale);
-        tipLabel.setText("当前缩放比例：" + String.format("%.1f", currentScale * 100) + "%");
-    }
-
-    // 缩小图片
-    private void zoomOut() {
-        if (currentScale > SCALE_STEP) {
-            currentScale -= SCALE_STEP;
-            imageView.setScaleX(currentScale);
-            imageView.setScaleY(currentScale);
-            tipLabel.setText("当前缩放比例：" + String.format("%.1f", currentScale * 100) + "%");
+    // ====================== 【新增】安全关闭视频 ======================
+    private void closeMedia() {
+        if (mediaPlayer != null) {
+            mediaPlayer.stop();
+            mediaPlayer.dispose();
+            mediaPlayer = null;
         }
-    }
-
-    // 开始自动播放
-    private void startPlay() {
-        if (!isPlaying) {
-            isPlaying = true;
-            playTimeline.play();
-            playBtn.setDisable(true);
-            stopBtn.setDisable(false);
-            tipLabel.setText("自动播放已启动，1秒切换一张");
-        }
-    }
-
-    // 停止自动播放
-    private void stopPlay() {
-        if (isPlaying) {
-            isPlaying = false;
-            playTimeline.stop();
-            playBtn.setDisable(false);
-            stopBtn.setDisable(true);
-            tipLabel.setText("自动播放已停止");
-        }
-    }
-
-    // 自动播放切换下一张
-    private void autoPlayNext() {
-        if (currentIndex < imageList.size() - 1) {
-            showNextImage();
-        } else {
-            // 到最后一张停止播放
-            stopPlay();
-            tipLabel.setText("播放完毕，已到最后一张图片");
-        }
-    }
-
-    // 窗口关闭时停止播放
-    public void onWindowClose() {
-        stopPlay();
+        scale = 1.0;
     }
 }

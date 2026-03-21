@@ -10,13 +10,16 @@ import java.net.URL;
 
 public class MainApp extends Application {
     private static Stage primaryStage;
+    // 主窗口尺寸常量
+    public static final double MAIN_WIDTH = 1200;
+    public static final double MAIN_HEIGHT = 800;
 
     @Override
     public void start(Stage stage) throws IOException {
         primaryStage = stage;
         // 加载主界面FXML
         FXMLLoader fxmlLoader = new FXMLLoader(MainApp.class.getResource("/fxml/main-view.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 1200, 800);
+        Scene scene = new Scene(fxmlLoader.load(), MAIN_WIDTH, MAIN_HEIGHT);
 
         // 修复空指针警告：安全加载CSS，先判断资源是否存在
         URL cssResource = MainApp.class.getResource("/css/style.css");

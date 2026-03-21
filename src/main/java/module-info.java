@@ -2,6 +2,7 @@ module com.photo {
     requires javafx.controls;
     requires javafx.fxml;
     requires javafx.graphics;
+    requires javafx.media; // 新增视频模块
     requires java.desktop;
     requires javafx.swing;
 
