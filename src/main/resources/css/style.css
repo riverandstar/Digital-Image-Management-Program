@@ -1,23 +1,110 @@
-/* 缩略图容器样式 */
-.thumbnail-box {
-    -fx-padding: 8;
-    -fx-background-color: #ffffff;
-    -fx-border-color: #dddddd;
-    -fx-border-width: 1;
-    -fx-border-radius: 5;
-    -fx-background-radius: 5;
-    -fx-alignment: center;
-    -fx-cursor: hand;
+/* ================= 全局样式 ================= */
+.root {
+    -fx-font-family: "Segoe UI", "Microsoft YaHei", "System", sans-serif;
+    -fx-background-color: #f5f7fa;  /* 全局背景色 */
 }
 
-/* 选中状态样式 */
-.thumbnail-box.selected {
+/* 主边框区域背景 */
+.border-pane {
+    -fx-background-color: #f5f7fa;
+}
+
+/* ================= 顶部工具栏美化 ================= */
+.top-bar {
+    -fx-background-color: linear-gradient(to right, #2c3e50, #3498db);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 5, 0, 0, 1);
+    -fx-padding: 12px 20px;
+}
+.top-bar Label {
+    -fx-text-fill: white;
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+}
+
+/* ================= 左侧目录树 ================= */
+.tree-view {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-padding: 8;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 4, 0, 0, 2);
+}
+.tree-cell {
+    -fx-padding: 6 8;
+    -fx-background-radius: 4;
+}
+.tree-cell:selected {
     -fx-background-color: #e3f2fd;
+    -fx-text-fill: #1976d2;
+}
+.tree-cell:hover {
+    -fx-background-color: #f0f0f0;
+}
+
+/* ================= 右侧缩略图区域 ================= */
+.thumbnail-pane {
+    -fx-background-color: #f5f7fa;
+    -fx-padding: 20;
+    -fx-hgap: 20;
+    -fx-vgap: 20;
+}
+
+/* 缩略图卡片（原有 .thumbnail-box 增强） */
+.thumbnail-box {
+    -fx-padding: 12;
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 8, 0, 0, 2);
+    -fx-cursor: hand;
+    -fx-transition: all 0.2s ease;
+}
+.thumbnail-box:hover {
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 12, 0, 0, 4);
+    -fx-translate-y: -2;
+}
+.thumbnail-box.selected {
+    -fx-background-color: #e8f0fe;
     -fx-border-color: #2196f3;
     -fx-border-width: 2;
 }
 
-/* 鼠标悬浮效果 */
-.thumbnail-box:hover {
-    -fx-effect: dropshadow(gaussian, #666666, 5, 0, 0, 0);
+/* 缩略图图片样式 */
+.thumbnail-box ImageView {
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 3, 0, 0, 1);
+}
+.thumbnail-box Label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #555;
+    -fx-alignment: center;
+    -fx-wrap-text: true;
+}
+
+/* ================= 底部状态栏 ================= */
+.bottom-bar {
+    -fx-background-color: #f0f2f5;
+    -fx-padding: 8 15;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1 0 0 0;
+}
+.bottom-bar Label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #6c757d;
+}
+
+/* ================= 滚动条美化 ================= */
+.scroll-pane {
+    -fx-background-color: transparent;
+}
+.scroll-pane .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-pref-width: 10;
+}
+.scroll-pane .scroll-bar:vertical .thumb {
+    -fx-background-color: #c0c0c0;
+    -fx-background-radius: 5;
+}
+.scroll-pane .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #a0a0a0;
 }

@@ -40,8 +40,6 @@ public class MainController implements Initializable {
     private Label tipLabel;
     @FXML
     private Label dirInfoLabel;
-    @FXML
-    private Button slideShowBtn;
 
     // 核心数据
     private File currentDir;
@@ -49,11 +47,13 @@ public class MainController implements Initializable {
     private final ObservableList<VBox> selectedThumbnails = FXCollections.observableArrayList();
     private final List<File> copiedFiles = new ArrayList<>();
 
+    private ContextMenu paneContextMenu;
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         initDirectoryTree();
         initThumbnailPaneEvent();
-        slideShowBtn.setOnAction(e -> openSlideShow(0));
+        // 注意：已移除 slideShowBtn 按钮及其事件绑定
     }
 
     // 初始化目录树（只显示文件夹）
@@ -247,6 +247,21 @@ public class MainController implements Initializable {
 
         // 框选多选功能
         thumbnailPane.setOnDragDetected(e -> thumbnailPane.startFullDrag());
+        // 空白区域右键菜单
+        ContextMenu paneContextMenu = new ContextMenu();
+        MenuItem pasteItem = new MenuItem("粘贴");
+        pasteItem.setOnAction(e -> pasteImages());
+        paneContextMenu.getItems().add(pasteItem);
+        // 可根据需要添加其他菜单项，如“刷新当前目录”等
+
+        thumbnailPane.setOnContextMenuRequested(e -> {
+            // 只有当点击的目标是 FlowPane 本身（即空白区域）时才显示菜单
+            if (e.getTarget() == thumbnailPane) {
+                // 可选：动态判断是否有可粘贴的内容，如果没有可以禁用菜单项或显示提示
+                paneContextMenu.show(thumbnailPane, e.getScreenX(), e.getScreenY());
+                e.consume(); // 阻止事件继续传播，避免影响子节点（但子节点已有自己的菜单，无影响）
+            }
+        });
     }
 
     // 设置缩略图选中状态
@@ -279,6 +294,7 @@ public class MainController implements Initializable {
     private void bindContextMenu(VBox thumbnailBox) {
         ContextMenu contextMenu = new ContextMenu();
         MenuItem copyItem = new MenuItem("复制");
+        MenuItem pasteItem = new MenuItem("粘贴");
         MenuItem renameItem = new MenuItem("重命名");
         MenuItem deleteItem = new MenuItem("删除");
         // 新增：转换为PDF选项
@@ -286,6 +302,8 @@ public class MainController implements Initializable {
 
         // 复制事件
         copyItem.setOnAction(e -> copySelectedImages());
+        // 粘贴事件
+        pasteItem.setOnAction(e -> pasteImages());
         // 重命名事件
         renameItem.setOnAction(e -> renameSelectedImages());
         // 删除事件
@@ -293,7 +311,7 @@ public class MainController implements Initializable {
         // PDF转换事件
         toPdfItem.setOnAction(e -> convertSelectedToPdf());
 
-        contextMenu.getItems().addAll(copyItem, renameItem, deleteItem, toPdfItem);
+        contextMenu.getItems().addAll(copyItem,pasteItem, renameItem, deleteItem, toPdfItem);
         thumbnailBox.setOnContextMenuRequested(e -> {
             // 右键选中当前缩略图
             if (!selectedThumbnails.contains(thumbnailBox)) {
