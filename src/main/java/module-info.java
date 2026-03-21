@@ -4,6 +4,7 @@ module com.photo {
     requires javafx.graphics;
     requires java.desktop;
     requires javafx.swing;
+    requires org.apache.pdfbox;
 
     exports com.photo;
     exports com.photo.controller;

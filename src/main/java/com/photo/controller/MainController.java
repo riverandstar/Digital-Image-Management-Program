@@ -3,6 +3,7 @@ package com.photo.controller;
 import com.photo.MainApp;
 import com.photo.model.ImageFile;
 import com.photo.utils.FileUtils;
+import com.photo.utils.PDFUtils;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -16,6 +17,7 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -273,12 +275,14 @@ public class MainController implements Initializable {
         selectedThumbnails.clear();
     }
 
-    // 绑定右键菜单
+    // 绑定右键菜单（新增PDF转换选项）
     private void bindContextMenu(VBox thumbnailBox) {
         ContextMenu contextMenu = new ContextMenu();
         MenuItem copyItem = new MenuItem("复制");
         MenuItem renameItem = new MenuItem("重命名");
         MenuItem deleteItem = new MenuItem("删除");
+        // 新增：转换为PDF选项
+        MenuItem toPdfItem = new MenuItem("转换为PDF");
 
         // 复制事件
         copyItem.setOnAction(e -> copySelectedImages());
@@ -286,8 +290,10 @@ public class MainController implements Initializable {
         renameItem.setOnAction(e -> renameSelectedImages());
         // 删除事件
         deleteItem.setOnAction(e -> deleteSelectedImages());
+        // PDF转换事件
+        toPdfItem.setOnAction(e -> convertSelectedToPdf());
 
-        contextMenu.getItems().addAll(copyItem, renameItem, deleteItem);
+        contextMenu.getItems().addAll(copyItem, renameItem, deleteItem, toPdfItem);
         thumbnailBox.setOnContextMenuRequested(e -> {
             // 右键选中当前缩略图
             if (!selectedThumbnails.contains(thumbnailBox)) {
@@ -297,6 +303,56 @@ public class MainController implements Initializable {
             }
             contextMenu.show(thumbnailBox, e.getScreenX(), e.getScreenY());
         });
+    }
+
+    // 新增：将选中的图片转换为PDF
+    @FXML
+    public void convertSelectedToPdf() {
+        // 1. 校验选中状态
+        if (selectedThumbnails.isEmpty()) {
+            tipLabel.setText("请先选择要转换的图片");
+            return;
+        }
+
+        // 2. 收集选中的图片文件
+        List<File> selectedImageFiles = new ArrayList<>();
+        for (VBox box : selectedThumbnails) {
+            ImageFile imageFile = (ImageFile) box.getUserData();
+            selectedImageFiles.add(imageFile.getFile());
+        }
+
+        // 3. 打开文件保存对话框，让用户选择PDF保存路径
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("保存PDF文件");
+        fileChooser.setInitialFileName("图片转换结果.pdf");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF文件 (*.pdf)", "*.pdf"));
+
+        // 默认保存到当前目录
+        if (currentDir != null) {
+            fileChooser.setInitialDirectory(currentDir);
+        }
+
+        File outputPdfFile = fileChooser.showSaveDialog(MainApp.getPrimaryStage());
+        if (outputPdfFile == null) {
+            tipLabel.setText("已取消PDF转换");
+            return;
+        }
+
+        // 4. 执行PDF转换
+        try {
+            PDFUtils.imagesToPdf(selectedImageFiles, outputPdfFile);
+            tipLabel.setText("PDF转换成功！文件路径：" + outputPdfFile.getAbsolutePath());
+        } catch (Exception e) {
+            tipLabel.setText("PDF转换失败：" + e.getMessage());
+            System.err.println("PDF转换异常：");
+            e.printStackTrace();
+            // 弹窗提示详细错误
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("转换失败");
+            alert.setHeaderText("图片转PDF失败");
+            alert.setContentText("错误信息：" + e.getMessage());
+            alert.showAndWait();
+        }
     }
 
     // 复制选中图片
