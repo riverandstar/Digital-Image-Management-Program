@@ -2,17 +2,33 @@
 
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.image.ImageView?>
 
 <BorderPane xmlns="http://javafx.com/javafx/17"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.photo.controller.MainController"
             styleClass="border-pane">
-    <!-- 顶部工具栏 -->
+    <!-- 顶部双层工具栏：标题栏 + 路径输入栏 -->
     <top>
-        <HBox spacing="10" styleClass="top-bar">
-            <Label text="📸 电子图片管理程序" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
-            <Pane HBox.hgrow="ALWAYS"/>
-        </HBox>
+        <VBox>
+            <!-- 原有标题工具栏 -->
+            <HBox spacing="10" styleClass="top-bar">
+                <Label text="📸 电子图片管理程序" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+                <Pane HBox.hgrow="ALWAYS"/>
+            </HBox>
+
+            <!-- 新增：顶部中央 路径显示+输入跳转栏 -->
+            <HBox alignment="CENTER" spacing="8" style="-fx-padding: 8 15; -fx-background-color: #f5f5f5;">
+                <Label text="当前路径：" style="-fx-font-size: 14px;"/>
+                <!-- 路径输入框，支持回车跳转 -->
+                <TextField fx:id="pathField"
+                           promptText="输入文件夹路径并按回车跳转"
+                           prefWidth="600"
+                           style="-fx-font-size: 14px;"/>
+                <!-- 跳转按钮 -->
+                <Button fx:id="jumpBtn" text="跳转" onAction="#jumpToPath" style="-fx-font-size: 14px;"/>
+            </HBox>
+        </VBox>
     </top>
 
     <!-- 中间主体区域 -->
