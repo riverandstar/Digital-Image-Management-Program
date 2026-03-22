@@ -139,6 +139,27 @@ public class MainController implements Initializable {
         directoryTree.setRoot(rootItem);
         directoryTree.setShowRoot(false);
 
+        directoryTree.setCellFactory(tv -> new TreeCell<File>() {
+            @Override
+            protected void updateItem(File file, boolean empty) {
+                super.updateItem(file, empty);
+                if (empty || file == null) {
+                    setText(null);
+                    setGraphic(null);
+                    return;
+                }
+
+                TreeItem<File> treeItem = getTreeItem();
+                if (treeItem != null) {
+                    setGraphic(treeItem.getGraphic());
+                }
+
+                String displayName = getRelativeFileName(file);
+                displayName = removeDuplicateFileNamePrefix(displayName);
+                setText(displayName);
+            }
+        });
+
         directoryTree.getSelectionModel().selectedItemProperty().addListener(
                 (observable, oldValue, newValue) -> {
                     if (newValue != null && newValue.getValue() != null) {
@@ -150,6 +171,7 @@ public class MainController implements Initializable {
         );
     }
 
+    // ==================== 已恢复文件夹图标 ====================
     private TreeItem<File> createTreeItemWithIcon(File file, Image iconImage, String customText) {
         TreeItem<File> item = new TreeItem<>(file) {
             private boolean isLoaded = false;
@@ -169,20 +191,13 @@ public class MainController implements Initializable {
             }
         };
 
-        String displayText;
-        if (customText != null && !customText.isBlank()) {
-            displayText = customText;
-        } else {
-            displayText = file.getName().isEmpty() ? file.getAbsolutePath() : file.getName();
-        }
-
         HBox hbox = new HBox(5);
         ImageView iconView = new ImageView();
 
+        // 磁盘 + 桌面 + 所有文件夹 → 都显示图标
         if (iconImage != null) {
             iconView.setImage(iconImage);
             iconView.setPreserveRatio(true);
-            iconView.setSmooth(true);
             iconView.setFitHeight(16);
             iconView.setFitWidth(16);
         } else {
@@ -190,11 +205,36 @@ public class MainController implements Initializable {
             iconView.setManaged(false);
         }
 
-        Label textLabel = new Label(displayText);
-        hbox.getChildren().addAll(iconView, textLabel);
+        hbox.getChildren().add(iconView);
         item.setGraphic(hbox);
 
         return item;
+    }
+
+    private String getRelativeFileName(File file) {
+        if (file == null) return "";
+        if (file.getParent() == null) {
+            return file.getAbsolutePath();
+        }
+        return file.getName();
+    }
+
+    private String removeDuplicateFileNamePrefix(String fileName) {
+        if (fileName == null || fileName.isEmpty()) return fileName;
+
+        int lastDot = fileName.lastIndexOf('.');
+        String name = lastDot == -1 ? fileName : fileName.substring(0, lastDot);
+        String ext = lastDot == -1 ? "" : fileName.substring(lastDot);
+
+        int len = name.length();
+        for (int i = 1; i <= len / 2; i++) {
+            String p = name.substring(0, i);
+            if (name.substring(i).startsWith(p)) {
+                name = name.substring(i);
+                return removeDuplicateFileNamePrefix(name + ext);
+            }
+        }
+        return name + ext;
     }
 
     private List<TreeItem<File>> loadChildrenWithIcon(TreeItem<File> parentItem) {
