@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.ResourceBundle;
 
 public class MainController implements Initializable {
-    // 新增：路径栏组件
     @FXML
     private HBox pathBar;
     @FXML
@@ -41,7 +40,6 @@ public class MainController implements Initializable {
     @FXML
     private Button jumpBtn;
 
-    // 原有组件
     @FXML
     private TreeView<File> directoryTree;
     @FXML
@@ -51,7 +49,6 @@ public class MainController implements Initializable {
     @FXML
     private Label dirInfoLabel;
 
-    // 核心数据
     private File currentDir;
     private final ObservableList<ImageFile> currentImageList = FXCollections.observableArrayList();
     private final ObservableList<VBox> selectedThumbnails = FXCollections.observableArrayList();
@@ -59,7 +56,6 @@ public class MainController implements Initializable {
 
     private ContextMenu paneContextMenu;
 
-    // 图标资源
     private Image cepanImage;
     private Image zhuomianImage;
     private Image wenjianjiaImage;
@@ -72,24 +68,28 @@ public class MainController implements Initializable {
         initPathBar();
     }
 
-    // ====================== 【修复】图标初始化（无报错版） ======================
     private void initIcons() {
         try {
-            cepanImage = new Image(getClass().getResourceAsStream("/com/sun/javafx/scene/control/skin/icons/disk.png"));
-            wenjianjiaImage = new Image(getClass().getResourceAsStream("/com/sun/javafx/scene/control/skin/icons/folder.png"));
-            zhuomianImage = wenjianjiaImage;
+            zhuomianImage = new Image(getClass().getResourceAsStream("/images/zhuomian.png"));
+            cepanImage = new Image(getClass().getResourceAsStream("/images/cepan.png"));
+            wenjianjiaImage = new Image(getClass().getResourceAsStream("/images/wenjianjia.png"));
         } catch (Exception e) {
-            cepanImage = null;
-            zhuomianImage = null;
-            wenjianjiaImage = null;
+            try {
+                cepanImage = new Image(getClass().getResourceAsStream("/com/sun/javafx/scene/control/skin/icons/disk.png"));
+                wenjianjiaImage = new Image(getClass().getResourceAsStream("/com/sun/javafx/scene/control/skin/icons/folder.png"));
+                zhuomianImage = wenjianjiaImage;
+            } catch (Exception ex) {
+                cepanImage = null;
+                zhuomianImage = null;
+                wenjianjiaImage = null;
+            }
         }
 
-        if (cepanImage != null && cepanImage.isError()) cepanImage = null;
         if (zhuomianImage != null && zhuomianImage.isError()) zhuomianImage = null;
+        if (cepanImage != null && cepanImage.isError()) cepanImage = null;
         if (wenjianjiaImage != null && wenjianjiaImage.isError()) wenjianjiaImage = null;
     }
 
-    // 初始化路径栏
     private void initPathBar() {
         pathField.setOnAction(e -> jumpToPath());
         File desktop = new File(System.getProperty("user.home") + "/Desktop");
@@ -99,7 +99,6 @@ public class MainController implements Initializable {
         }
     }
 
-    // 路径跳转
     @FXML
     public void jumpToPath() {
         String path = pathField.getText().trim();
@@ -121,19 +120,18 @@ public class MainController implements Initializable {
         directoryTree.getSelectionModel().clearSelection();
     }
 
-    // 初始化目录树
     private void initDirectoryTree() {
         TreeItem<File> rootItem = new TreeItem<>(null);
         rootItem.setExpanded(true);
 
         File desktopDir = new File(System.getProperty("user.home") + "/Desktop");
-        TreeItem<File> desktopItem = createTreeItemWithIcon(desktopDir, zhuomianImage);
+        TreeItem<File> desktopItem = createTreeItemWithIcon(desktopDir, zhuomianImage, "桌面");
         rootItem.getChildren().add(desktopItem);
 
         File[] roots = File.listRoots();
         if (roots != null) {
             for (File root : roots) {
-                TreeItem<File> rootNode = createTreeItemWithIcon(root, cepanImage);
+                TreeItem<File> rootNode = createTreeItemWithIcon(root, cepanImage, null);
                 rootItem.getChildren().add(rootNode);
             }
         }
@@ -152,8 +150,7 @@ public class MainController implements Initializable {
         );
     }
 
-    // ====================== 【修复】创建带图标的树节点 ======================
-    private TreeItem<File> createTreeItemWithIcon(File file, Image iconImage) {
+    private TreeItem<File> createTreeItemWithIcon(File file, Image iconImage, String customText) {
         TreeItem<File> item = new TreeItem<>(file) {
             private boolean isLoaded = false;
 
@@ -172,16 +169,22 @@ public class MainController implements Initializable {
             }
         };
 
-        String displayText = file.getName().isEmpty() ? file.getAbsolutePath() : file.getName();
-        HBox hbox = new HBox(5);
+        String displayText;
+        if (customText != null && !customText.isBlank()) {
+            displayText = customText;
+        } else {
+            displayText = file.getName().isEmpty() ? file.getAbsolutePath() : file.getName();
+        }
 
-        // ====================== 【关键修复】图片为空时不显示 ======================
+        HBox hbox = new HBox(5);
         ImageView iconView = new ImageView();
+
         if (iconImage != null) {
             iconView.setImage(iconImage);
             iconView.setPreserveRatio(true);
             iconView.setSmooth(true);
-            iconView.fitHeightProperty().bind(hbox.heightProperty().subtract(2));
+            iconView.setFitHeight(16);
+            iconView.setFitWidth(16);
         } else {
             iconView.setVisible(false);
             iconView.setManaged(false);
@@ -194,7 +197,6 @@ public class MainController implements Initializable {
         return item;
     }
 
-    // 加载子文件夹
     private List<TreeItem<File>> loadChildrenWithIcon(TreeItem<File> parentItem) {
         List<TreeItem<File>> children = new ArrayList<>();
         File file = parentItem.getValue();
@@ -202,7 +204,7 @@ public class MainController implements Initializable {
             File[] files = file.listFiles(File::isDirectory);
             if (files != null) {
                 for (File childFile : files) {
-                    TreeItem<File> childItem = createTreeItemWithIcon(childFile, wenjianjiaImage);
+                    TreeItem<File> childItem = createTreeItemWithIcon(childFile, wenjianjiaImage, null);
                     children.add(childItem);
                 }
             }
@@ -210,7 +212,6 @@ public class MainController implements Initializable {
         return children;
     }
 
-    // 加载目录图片
     private void loadDirectoryImages(File dir) {
         this.currentDir = dir;
         currentImageList.clear();
