@@ -14,10 +14,10 @@
 
 <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="650.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.photo.editor.EditorController">
    <center>
-      <StackPane prefHeight="150.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+      <StackPane fx:id="imageContainer" prefHeight="150.0" prefWidth="200.0" BorderPane.alignment="CENTER">
          <children>
             <ImageView fx:id="editImageView" fitHeight="500.0" fitWidth="800.0" pickOnBounds="true" preserveRatio="true" />
-            <AnchorPane fx:id="drawPane" prefHeight="500.0" prefWidth="800.0" />
+            <AnchorPane fx:id="drawPane" onMouseDragged="#onMouseDragged" prefHeight="500.0" prefWidth="800.0" />
          </children>
       </StackPane>
    </center>
@@ -29,13 +29,13 @@
          <children>
             <HBox fx:id="colorPanel" prefHeight="100.0" prefWidth="200.0" visible="false">
                <children>
-                  <Button mnemonicParsing="false" onAction="#selectRed" text="Button" />
-                  <Button mnemonicParsing="false" onAction="#selectOrange" text="Button" />
-                  <Button mnemonicParsing="false" onAction="#selectYellow" text="Button" />
-                  <Button mnemonicParsing="false" onAction="#selectGreen" text="Button" />
-                  <Button mnemonicParsing="false" onAction="#selectCyan" text="Button" />
-                  <Button mnemonicParsing="false" onAction="#selectBlue" text="Button" />
-                  <Button mnemonicParsing="false" onAction="#selectPurple" text="Button" />
+                  <Button mnemonicParsing="false" onAction="#selectRed" text="红" />
+                  <Button mnemonicParsing="false" onAction="#selectOrange" text="橙" />
+                  <Button mnemonicParsing="false" onAction="#selectYellow" text="黄" />
+                  <Button mnemonicParsing="false" onAction="#selectGreen" text="绿" />
+                  <Button mnemonicParsing="false" onAction="#selectCyan" text="青" />
+                  <Button mnemonicParsing="false" onAction="#selectBlue" text="蓝" />
+                  <Button mnemonicParsing="false" onAction="#selectPurple" text="紫" />
                </children>
             </HBox>
             <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="10.0">

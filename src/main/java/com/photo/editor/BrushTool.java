@@ -16,6 +16,8 @@ public class BrushTool {
     public static final Color BLUE   = Color.BLUE;
     public static final Color PURPLE = Color.PURPLE;
 
+    public Color getCurrentColor() { return currentColor; }
+
     public void setThickness(double t) { this.thickness = t; }
     public void setOpacity(double o) { this.opacity = o; }
     public void setColor(Color c) { this.currentColor = c; }
