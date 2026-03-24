@@ -34,9 +34,9 @@ import java.util.ResourceBundle;
 
 public class MainController implements Initializable {
     @FXML
-    private HBox pathBar;
-    @FXML
     private TextField pathField;
+
+    @SuppressWarnings("unused")
     @FXML
     private Button jumpBtn;
 
@@ -54,7 +54,8 @@ public class MainController implements Initializable {
     private final ObservableList<VBox> selectedThumbnails = FXCollections.observableArrayList();
     private final List<File> copiedFiles = new ArrayList<>();
 
-    private ContextMenu paneContextMenu;
+
+    private ContextMenu currentOpenMenu;
 
     private Image cepanImage;
     private Image zhuomianImage;
@@ -68,6 +69,7 @@ public class MainController implements Initializable {
         initPathBar();
     }
 
+    @SuppressWarnings("ConstantConditions")
     private void initIcons() {
         try {
             zhuomianImage = new Image(getClass().getResourceAsStream("/images/zhuomian.png"));
@@ -109,14 +111,14 @@ public class MainController implements Initializable {
         File targetDir = new File(path);
         if (targetDir.exists() && targetDir.isDirectory()) {
             loadDirectoryImages(targetDir);
-            updateTreeSelection(targetDir);
+            updateTreeSelection();
             tipLabel.setText("成功跳转到：" + path);
         } else {
             tipLabel.setText("路径无效：" + path);
         }
     }
 
-    private void updateTreeSelection(File targetDir) {
+    private void updateTreeSelection() {
         directoryTree.getSelectionModel().clearSelection();
     }
 
@@ -125,13 +127,13 @@ public class MainController implements Initializable {
         rootItem.setExpanded(true);
 
         File desktopDir = new File(System.getProperty("user.home") + "/Desktop");
-        TreeItem<File> desktopItem = createTreeItemWithIcon(desktopDir, zhuomianImage, "桌面");
+        TreeItem<File> desktopItem = createTreeItemWithIcon(desktopDir, zhuomianImage);
         rootItem.getChildren().add(desktopItem);
 
         File[] roots = File.listRoots();
         if (roots != null) {
             for (File root : roots) {
-                TreeItem<File> rootNode = createTreeItemWithIcon(root, cepanImage, null);
+                TreeItem<File> rootNode = createTreeItemWithIcon(root, cepanImage);
                 rootItem.getChildren().add(rootNode);
             }
         }
@@ -139,7 +141,7 @@ public class MainController implements Initializable {
         directoryTree.setRoot(rootItem);
         directoryTree.setShowRoot(false);
 
-        directoryTree.setCellFactory(tv -> new TreeCell<File>() {
+        directoryTree.setCellFactory(tv -> new TreeCell<>() {
             @Override
             protected void updateItem(File file, boolean empty) {
                 super.updateItem(file, empty);
@@ -172,7 +174,7 @@ public class MainController implements Initializable {
     }
 
     // ==================== 已恢复文件夹图标 ====================
-    private TreeItem<File> createTreeItemWithIcon(File file, Image iconImage, String customText) {
+    private TreeItem<File> createTreeItemWithIcon(File file, Image iconImage) {
         TreeItem<File> item = new TreeItem<>(file) {
             private boolean isLoaded = false;
 
@@ -244,7 +246,7 @@ public class MainController implements Initializable {
             File[] files = file.listFiles(File::isDirectory);
             if (files != null) {
                 for (File childFile : files) {
-                    TreeItem<File> childItem = createTreeItemWithIcon(childFile, wenjianjiaImage, null);
+                    TreeItem<File> childItem = createTreeItemWithIcon(childFile, wenjianjiaImage);
                     children.add(childItem);
                 }
             }
@@ -341,25 +343,50 @@ public class MainController implements Initializable {
         });
     }
 
+    /**
+     * 创建公用的右键菜单（复制、粘贴、重命名、删除、转换为PDF）
+     */
+    private ContextMenu createCommonContextMenu() {
+        ContextMenu menu = new ContextMenu();
+        MenuItem copyItem = new MenuItem("复制");
+        MenuItem pasteItem = new MenuItem("粘贴");
+        MenuItem renameItem = new MenuItem("重命名");
+        MenuItem deleteItem = new MenuItem("删除");
+        MenuItem toPdfItem = new MenuItem("转换为PDF");
+
+        copyItem.setOnAction(e -> copySelectedImages());
+        pasteItem.setOnAction(e -> pasteImages());
+        renameItem.setOnAction(e -> renameSelectedImages());
+        deleteItem.setOnAction(e -> deleteSelectedImages());
+        toPdfItem.setOnAction(e -> convertSelectedToPdf());
+
+        menu.getItems().addAll(copyItem, pasteItem, renameItem, deleteItem, toPdfItem);
+        return menu;
+    }
+    // 修改后的 initThumbnailPaneEvent
     private void initThumbnailPaneEvent() {
         thumbnailPane.setOnMouseClicked(e -> {
             if (e.getTarget() == thumbnailPane) {
                 clearAllSelected();
                 tipLabel.setText("已取消所有选中");
+                // 关闭可能打开的菜单
+                if (currentOpenMenu != null && currentOpenMenu.isShowing()) {
+                    currentOpenMenu.hide();
+                }
             }
         });
 
         thumbnailPane.setOnDragDetected(e -> thumbnailPane.startFullDrag());
-        ContextMenu paneContextMenu = new ContextMenu();
-        MenuItem pasteItem = new MenuItem("粘贴");
-        pasteItem.setOnAction(e -> pasteImages());
-        paneContextMenu.getItems().add(pasteItem);
 
         thumbnailPane.setOnContextMenuRequested(e -> {
-            if (e.getTarget() == thumbnailPane) {
-                paneContextMenu.show(thumbnailPane, e.getScreenX(), e.getScreenY());
-                e.consume();
+            // 关闭之前的菜单
+            if (currentOpenMenu != null && currentOpenMenu.isShowing()) {
+                currentOpenMenu.hide();
             }
+            ContextMenu menu = createCommonContextMenu();
+            currentOpenMenu = menu;
+            menu.show(thumbnailPane, e.getScreenX(), e.getScreenY());
+            e.consume();
         });
     }
 
@@ -387,29 +414,24 @@ public class MainController implements Initializable {
     }
 
     private void bindContextMenu(VBox thumbnailBox) {
-        ContextMenu contextMenu = new ContextMenu();
-        MenuItem copyItem = new MenuItem("复制");
-        MenuItem pasteItem = new MenuItem("粘贴");
-        MenuItem renameItem = new MenuItem("重命名");
-        MenuItem deleteItem = new MenuItem("删除");
-        MenuItem toPdfItem = new MenuItem("转换为PDF");
-
-        copyItem.setOnAction(e -> copySelectedImages());
-        pasteItem.setOnAction(e -> pasteImages());
-        renameItem.setOnAction(e -> renameSelectedImages());
-        deleteItem.setOnAction(e -> deleteSelectedImages());
-        toPdfItem.setOnAction(e -> convertSelectedToPdf());
-
-        contextMenu.getItems().addAll(copyItem, pasteItem, renameItem, deleteItem, toPdfItem);
         thumbnailBox.setOnContextMenuRequested(e -> {
+            // 如果已有打开的菜单，先关闭它
+            if (currentOpenMenu != null && currentOpenMenu.isShowing()) {
+                currentOpenMenu.hide();
+            }
+            // 确保当前缩略图被选中
             if (!selectedThumbnails.contains(thumbnailBox)) {
                 clearAllSelected();
                 setThumbnailSelected(thumbnailBox, true);
                 tipLabel.setText("已选中 " + selectedThumbnails.size() + " 张图片");
             }
+            // 创建新菜单并记录
+            ContextMenu contextMenu = createCommonContextMenu();
+            currentOpenMenu = contextMenu;
             contextMenu.show(thumbnailBox, e.getScreenX(), e.getScreenY());
         });
     }
+
 
     @FXML
     public void convertSelectedToPdf() {
@@ -444,7 +466,7 @@ public class MainController implements Initializable {
             tipLabel.setText("PDF转换成功！文件路径：" + outputPdfFile.getAbsolutePath());
         } catch (Exception e) {
             tipLabel.setText("PDF转换失败：" + e.getMessage());
-            e.printStackTrace();
+            System.err.println("PDF转换失败: " + e.getMessage());
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("转换失败");
             alert.setHeaderText("图片转PDF失败");
