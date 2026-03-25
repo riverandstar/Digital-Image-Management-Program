@@ -21,6 +21,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 import java.io.File;
@@ -632,16 +633,35 @@ public class MainController implements Initializable {
 
         try {
             FXMLLoader fxmlLoader = new FXMLLoader(MainApp.class.getResource("/fxml/slideshow-view.fxml"));
-            Scene scene = new Scene(fxmlLoader.load(), 1200, 800);
+
+            // ===== 幻灯片窗口适配 =====
+            double screenWidth = Screen.getPrimary().getVisualBounds().getWidth();
+            double screenHeight = Screen.getPrimary().getVisualBounds().getHeight();
+            // 幻灯片窗口设为屏幕的90%（略大于主窗口，提升观看体验）
+            double slideWidth = screenWidth * 0.9;
+            double slideHeight = screenHeight * 0.9;
+            // 幻灯片最小尺寸
+            double minSlideWidth = 800;
+            double minSlideHeight = 600;
+            slideWidth = Math.max(slideWidth, minSlideWidth);
+            slideHeight = Math.max(slideHeight, minSlideHeight);
+
+            Scene scene = new Scene(fxmlLoader.load(), slideWidth, slideHeight);
             Stage slideStage = new Stage();
             slideStage.setTitle("幻灯片播放");
             slideStage.setScene(scene);
             slideStage.initModality(Modality.APPLICATION_MODAL);
             slideStage.initOwner(MainApp.getPrimaryStage());
 
+            // 幻灯片窗口允许缩放 + 最小尺寸 + 居中
+            slideStage.setResizable(true);
+            slideStage.setMinWidth(minSlideWidth);
+            slideStage.setMinHeight(minSlideHeight);
+            slideStage.centerOnScreen();
+
             SlideShowController controller = fxmlLoader.getController();
             controller.setImageList(currentImageList, currentIndex);
-            controller.setMainController(this);
+
             slideStage.show();
         } catch (IOException e) {
             System.err.println("打开幻灯片失败: " + e.getMessage());

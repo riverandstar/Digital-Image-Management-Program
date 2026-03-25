@@ -4,9 +4,11 @@ import com.photo.editor.EditorController;
 import com.photo.model.ImageFile;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.Bounds;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -77,21 +79,43 @@ public class SlideShowController implements Initializable {
         showCurrentImage();
     }
 
-    // 显示当前索引的图片
     private void showCurrentImage() {
         if (imageList == null || imageList.isEmpty()) return;
 
         ImageFile currentImage = imageList.get(currentIndex);
         Image image = new Image(currentImage.getFile().toURI().toString());
         imageView.setImage(image);
+
         // 重置缩放
         currentScale = 1.0;
         imageView.setScaleX(currentScale);
         imageView.setScaleY(currentScale);
-        // 自适应窗口
-        imageView.setFitWidth(imageView.getScene().getWidth() - 100);
-        imageView.setFitHeight(imageView.getScene().getHeight() - 100);
+
+        // ========== 核心修复：兼容全版本的自适应绑定 ==========
+        // 先确保父组件加载完成，再执行绑定，避免空指针
+        imageView.parentProperty().addListener((obs, oldParent, newParent) -> {
+            if (newParent != null) {
+                // 宽度绑定：父容器宽度-50px边距，设置最小宽度防止缩放过小
+                imageView.fitWidthProperty().bind(
+                        Bindings.createDoubleBinding(() -> {
+                            Bounds parentBounds = newParent.getLayoutBounds();
+                            return Math.max(parentBounds.getWidth() - 50, 200);
+                        }, newParent.layoutBoundsProperty())
+                );
+
+                // 高度绑定：父容器高度-80px边距，设置最小高度
+                imageView.fitHeightProperty().bind(
+                        Bindings.createDoubleBinding(() -> {
+                            Bounds parentBounds = newParent.getLayoutBounds();
+                            return Math.max(parentBounds.getHeight() - 80, 200);
+                        }, newParent.layoutBoundsProperty())
+                );
+            }
+        });
+
+        // 保持图片宽高比，防止变形，优化缩放清晰度
         imageView.setPreserveRatio(true);
+        imageView.setSmooth(true);
 
         // 更新页码和提示
         pageLabel.setText((currentIndex + 1) + " / " + imageList.size());
