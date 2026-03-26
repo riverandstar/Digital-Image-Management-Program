@@ -309,14 +309,27 @@ public class MainController implements Initializable {
             thumbnailBox.getStyleClass().add("thumbnail-box");
             thumbnailBox.setUserData(imageFile);
 
+            // 固定容器大小
+            thumbnailBox.setPrefWidth(200);
+            thumbnailBox.setPrefHeight(120);
+            thumbnailBox.setMaxWidth(200);
+            thumbnailBox.setMaxHeight(120);
+
+            // ========== 核心：让图片居中 ==========
+            thumbnailBox.setAlignment(javafx.geometry.Pos.TOP_CENTER);
+            // ====================================
+
             ImageView imageView = new ImageView(imageFile.getThumbnail());
+            // 保持比例 + 固定区域
             imageView.setPreserveRatio(true);
-            imageView.setFitWidth(FileUtils.THUMBNAIL_WIDTH);
-            imageView.setFitHeight(FileUtils.THUMBNAIL_HEIGHT);
+            imageView.setFitWidth(200);
+            imageView.setFitHeight(100);
+            imageView.setSmooth(true);
 
             Label nameLabel = new Label(imageFile.getFileName());
-            nameLabel.setMaxWidth(FileUtils.THUMBNAIL_WIDTH);
+            nameLabel.setMaxWidth(200);
             nameLabel.setWrapText(true);
+            nameLabel.setAlignment(javafx.geometry.Pos.CENTER);
 
             thumbnailBox.getChildren().addAll(imageView, nameLabel);
             bindThumbnailEvent(thumbnailBox);
@@ -325,7 +338,6 @@ public class MainController implements Initializable {
             thumbnailPane.getChildren().add(thumbnailBox);
         }
     }
-
     private void bindThumbnailEvent(VBox thumbnailBox) {
         thumbnailBox.setOnMouseClicked(e -> {
             if (e.getButton() == MouseButton.PRIMARY) {
@@ -641,6 +653,7 @@ public class MainController implements Initializable {
 
             SlideShowController controller = fxmlLoader.getController();
             controller.setImageList(currentImageList, currentIndex);
+            controller.setFixedImageSize(300, 100); // 新增这一行
 
             slideStage.show();
         } catch (IOException e) {

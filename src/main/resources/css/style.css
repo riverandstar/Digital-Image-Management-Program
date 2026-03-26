@@ -48,7 +48,6 @@
     -fx-vgap: 20;
 }
 
-/* 缩略图卡片（原有 .thumbnail-box 增强） */
 .thumbnail-box {
     -fx-padding: 12;
     -fx-background-color: white;
@@ -59,20 +58,18 @@
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 8, 0, 0, 2);
     -fx-cursor: hand;
     -fx-transition: all 0.2s ease;
-}
-.thumbnail-box:hover {
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 12, 0, 0, 4);
-    -fx-translate-y: -2;
-}
-.thumbnail-box.selected {
-    -fx-background-color: #e8f0fe;
-    -fx-border-color: #2196f3;
-    -fx-border-width: 2;
+    -fx-pref-width: 200px;
+    -fx-pref-height: 120px;
+    -fx-max-width: 200px;
+    -fx-max-height: 120px;
+    -fx-alignment: top-center; /* 居中 */
 }
 
-/* 缩略图图片样式 */
 .thumbnail-box ImageView {
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 3, 0, 0, 1);
+    -fx-fit-width: 200px;
+    -fx-fit-height: 100px;
+    -fx-preserve-ratio: true;
 }
 .thumbnail-box Label {
     -fx-font-size: 12px;

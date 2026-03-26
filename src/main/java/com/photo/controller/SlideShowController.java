@@ -43,21 +43,30 @@ public class SlideShowController implements Initializable {
     private final double SCALE_STEP = 0.2;
     private Timeline playTimeline;
     private boolean isPlaying = false;
+    private int fixedWidth = 1100;
+    private int fixedHeight = 600;
+    public void setFixedImageSize(int width, int height) {
+        this.fixedWidth = width;
+        this.fixedHeight = height;
+    }
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        // 初始化自动播放时间线，1秒切换一次
         playTimeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> autoPlayNext()));
         playTimeline.setCycleCount(Timeline.INDEFINITE);
         stopBtn.setDisable(true);
 
-        // 按钮事件绑定
         prevBtn.setOnAction(e -> showPrevImage());
         nextBtn.setOnAction(e -> showNextImage());
         zoomInBtn.setOnAction(e -> zoomIn());
         zoomOutBtn.setOnAction(e -> zoomOut());
         playBtn.setOnAction(e -> startPlay());
         stopBtn.setOnAction(e -> stopPlay());
+
+
+        imageView.setFitWidth(1100);
+        imageView.setFitHeight(600);
+        imageView.setPreserveRatio(true);
     }
 
     // 接收主界面传递的图片列表和当前索引
@@ -72,33 +81,33 @@ public class SlideShowController implements Initializable {
         if (imageList == null || imageList.isEmpty()) return;
 
         ImageFile currentImage = imageList.get(currentIndex);
-        Image image = new Image(currentImage.getFile().toURI().toString());
+        //  加载原图，保持比例
+        Image image = new Image(
+                currentImage.getFile().toURI().toString(),
+                1100,
+                600,
+                true,  // 保持比例
+                true,
+                false
+        );
         imageView.setImage(image);
-        // 重置缩放
+
         currentScale = 1.0;
         imageView.setScaleX(currentScale);
         imageView.setScaleY(currentScale);
-        // 自适应窗口
-        imageView.setFitWidth(imageView.getScene().getWidth() - 100);
-        imageView.setFitHeight(imageView.getScene().getHeight() - 100);
-        imageView.setPreserveRatio(true);
 
-        // 更新页码和提示
         pageLabel.setText((currentIndex + 1) + " / " + imageList.size());
         tipLabel.setText("当前图片：" + currentImage.getFileName() + " | 大小：" + currentImage.getFile().length() / 1024 + " KB");
 
-        // 首尾按钮控制
         prevBtn.setDisable(currentIndex == 0);
         nextBtn.setDisable(currentIndex == imageList.size() - 1);
 
-        // 首尾提示
         if (currentIndex == 0) {
             tipLabel.setText(tipLabel.getText() + " | 已经是第一张图片");
         } else if (currentIndex == imageList.size() - 1) {
             tipLabel.setText(tipLabel.getText() + " | 已经是最后一张图片");
         }
     }
-
     // 上一张图片
     private void showPrevImage() {
         if (currentIndex > 0) {
