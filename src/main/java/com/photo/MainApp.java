@@ -3,6 +3,7 @@ package com.photo;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -16,7 +17,21 @@ public class MainApp extends Application {
         primaryStage = stage;
         // 加载主界面FXML
         FXMLLoader fxmlLoader = new FXMLLoader(MainApp.class.getResource("/fxml/main-view.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 1200, 800);
+        // 获取屏幕可用区域（排除任务栏等系统UI）
+        double screenWidth = Screen.getPrimary().getVisualBounds().getWidth();
+        double screenHeight = Screen.getPrimary().getVisualBounds().getHeight();
+
+        // 窗口大小设为屏幕的80%（可根据需求调整比例，如0.75）
+        double windowWidth = screenWidth * 0.8;
+        double windowHeight = screenHeight * 0.8;
+
+        // 限制最小窗口尺寸（防止缩放过小导致布局错乱）
+        double minWidth = 800;
+        double minHeight = 600;
+        windowWidth = Math.max(windowWidth, minWidth);
+        windowHeight = Math.max(windowHeight, minHeight);
+
+        Scene scene = new Scene(fxmlLoader.load(), windowWidth, windowHeight);
 
         // 修复空指针警告：安全加载CSS，先判断资源是否存在
         URL cssResource = MainApp.class.getResource("/css/style.css");
@@ -27,6 +42,12 @@ public class MainApp extends Application {
         }
 
         stage.setTitle("电子图片管理程序");
+        stage.setResizable(true);
+        // 设置窗口最小尺寸
+        stage.setMinWidth(minWidth);
+        stage.setMinHeight(minHeight);
+        // 窗口居中显示
+        stage.centerOnScreen();
         stage.setScene(scene);
         stage.show();
     }
