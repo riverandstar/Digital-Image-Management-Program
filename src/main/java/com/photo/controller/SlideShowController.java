@@ -50,7 +50,7 @@ public class SlideShowController implements Initializable {
     private Timeline playTimeline;
     private boolean isPlaying = false;
     private int fixedWidth = 1100;
-    private int fixedHeight = 600;
+    private int fixedHeight = 500;
     public void setFixedImageSize(int width, int height) {
         this.fixedWidth = width;
         this.fixedHeight = height;
@@ -75,7 +75,7 @@ public class SlideShowController implements Initializable {
 
 
         imageView.setFitWidth(1100);
-        imageView.setFitHeight(600);
+        imageView.setFitHeight(500);
         imageView.setPreserveRatio(true);
     }
 
@@ -95,7 +95,7 @@ public class SlideShowController implements Initializable {
         Image image = new Image(
                 currentImage.getFile().toURI().toString(),
                 1100,
-                600,
+                500,
                 true,  // 保持比例
                 true,
                 false
