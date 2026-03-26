@@ -1,14 +1,19 @@
 package com.photo.controller;
 
+import com.photo.editor.EditorController;
 import com.photo.model.ImageFile;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.AnchorPane;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.net.URL;
@@ -37,6 +42,7 @@ public class SlideShowController implements Initializable {
     private Button stopBtn;
 
     // 核心数据
+    private MainController mainController;
     private List<ImageFile> imageList;
     private int currentIndex;
     private double currentScale = 1.0;
@@ -48,6 +54,10 @@ public class SlideShowController implements Initializable {
     public void setFixedImageSize(int width, int height) {
         this.fixedWidth = width;
         this.fixedHeight = height;
+    }
+
+    public void setMainController(MainController mainController) {
+        this.mainController = mainController;
     }
 
     @Override
@@ -172,6 +182,27 @@ public class SlideShowController implements Initializable {
             // 到最后一张停止播放
             stopPlay();
             tipLabel.setText("播放完毕，已到最后一张图片");
+        }
+    }
+
+    @FXML
+    private void openEditorController() {
+        try {
+            FXMLLoader loader = new javafx.fxml.FXMLLoader(
+                    getClass().getResource("/fxml/editor.fxml")
+            );
+            Scene scene = new javafx.scene.Scene(loader.load(), 900, 650);
+
+            EditorController editorcontroller = loader.getController();
+            editorcontroller.initData(imageList.get(currentIndex), mainController);
+
+            Stage stage = new Stage();
+            stage.setTitle("图片编辑器");
+            stage.setScene(scene);
+            stage.show();
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

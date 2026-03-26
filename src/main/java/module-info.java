@@ -13,4 +13,7 @@ module com.photo {
 
     opens com.photo.controller to javafx.fxml;
     opens com.photo to javafx.fxml;
+
+    opens com.photo.editor to javafx.fxml;
+    exports com.photo.editor to javafx.fxml;
 }
