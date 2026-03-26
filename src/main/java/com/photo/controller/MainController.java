@@ -254,7 +254,7 @@ public class MainController implements Initializable {
         return children;
     }
 
-    private void loadDirectoryImages(File dir) {
+    public void loadDirectoryImages(File dir) {
         this.currentDir = dir;
         currentImageList.clear();
         thumbnailPane.getChildren().clear();
@@ -660,5 +660,9 @@ public class MainController implements Initializable {
             System.err.println("打开幻灯片失败: " + e.getMessage());
             tipLabel.setText("打开幻灯片失败");
         }
+    }
+    // 获取当前目录（给编辑器用的）
+    public File getCurrentDir() {
+        return currentDir;
     }
 }
