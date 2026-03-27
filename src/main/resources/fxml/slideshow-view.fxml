@@ -35,9 +35,7 @@
             <Separator orientation="VERTICAL" prefHeight="30" />
             <Button fx:id="playBtn" prefWidth="100" text="自动播放" />
             <Button fx:id="stopBtn" prefWidth="100" text="停止播放" />
+         <Button mnemonicParsing="false" onAction="#openEditorController" text="图片编辑" />
         </HBox>
     </bottom>
-   <left>
-      <Button mnemonicParsing="false" onAction="#openEditorController" text="图片编辑" BorderPane.alignment="CENTER" />
-   </left>
 </BorderPane>
