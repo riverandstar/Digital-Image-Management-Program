@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane prefWidth="700" prefHeight="500"
+            xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.photo.editor.EditorController">
+
+   <StackPane fx:id="mainEditPane" layoutX="30" layoutY="20"
+              prefWidth="640" prefHeight="380"
+              style="-fx-background-color: #ffffff; -fx-border-color: #cccccc;">
+      <ImageView fx:id="editImageView" fitWidth="640" fitHeight="380" preserveRatio="true"/>
+      <AnchorPane fx:id="drawPane"
+                  onMousePressed="#onMousePressed"
+                  onMouseDragged="#onMouseDragged"
+                  onMouseReleased="#onMouseReleased"/>
+   </StackPane>
+
+   <HBox layoutX="30" layoutY="420" prefWidth="640" prefHeight="60"
+         spacing="12" alignment="CENTER"
+         style="-fx-background-color: #e0e0e0; -fx-border-color: #999;">
+
+      <Button fx:id="btnSharpen" text="锐化" prefWidth="90" prefHeight="40" onAction="#applySharpen"/>
+      <Button fx:id="btnBlur" text="模糊" prefWidth="90" prefHeight="40" onAction="#applyBlur"/>
+      <Button fx:id="btnBrush" text="画笔" prefWidth="90" prefHeight="40" onAction="#useBrush"/>
+      <Button fx:id="btnColorCycle" text="彩色(红)" prefWidth="90" prefHeight="40" onAction="#nextColor"/>
+      <Button fx:id="btnUndo" text="回溯" prefWidth="90" prefHeight="40" onAction="#undoAll"/>
+      <Button fx:id="btnSave" text="保存" prefWidth="90" prefHeight="40" onAction="#saveImage"/>
+   </HBox>
+
+</AnchorPane>
