@@ -4,13 +4,13 @@ import com.photo.controller.MainController;
 import com.photo.model.ImageFile;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Shape;
-
 
 import java.util.*;
 
@@ -19,7 +19,13 @@ public class EditorController {
     @FXML public StackPane mainEditPane;
     @FXML public ImageView editImageView;
     @FXML public AnchorPane drawPane;
-    @FXML public Button btnSharpen, btnBlur, btnBrush, btnColorCycle, btnUndo, btnSave;
+
+    // 👇 删掉了 btnSharpen, btnBlur，只留5个按钮
+    @FXML public Button btnBrush, btnColorCycle, btnUndo, btnSave;
+
+    // 👇 新增美化MenuButton和4个MenuItem
+    @FXML public javafx.scene.control.MenuButton menuBeauty;
+    @FXML public MenuItem itemSharpen, itemBlur, itemBrightness, itemContrast;
 
     private final BrushTool brushTool = new BrushTool();
     private final BeautyTool beautyTool = new BeautyTool();
@@ -39,21 +45,17 @@ public class EditorController {
     private static final long HISTORY_DELAY = 500;
 
     public void initData(ImageFile imageFile, MainController mainController) {
-        // 给成员变量赋值，这行是核心！
         this.currentImageFile = imageFile;
         this.mainController = mainController;
 
-        // 加载原图
         if (imageFile != null && imageFile.getFile() != null) {
-            editImageView.setImage(new javafx.scene.image.Image(imageFile.getFile().toURI().toString()));
+            editImageView.setImage(new Image(imageFile.getFile().toURI().toString()));
         }
 
-        // 初始化颜色（你原来的逻辑）
         colorIndex = 0;
         brushTool.setColor(colorList.get(colorIndex));
         updateColorButtonText();
 
-        // 保存初始历史
         saveHistory();
     }
 
@@ -71,19 +73,32 @@ public class EditorController {
         lastSaveTime = now;
     }
 
-    // ===================== 按钮功能 =====================
+    // ===================== MenuItem 美化功能 =====================
     @FXML
-    private void applySharpen() {
+    private void onSharpen() {
         saveHistory();
         beautyTool.applySharpen(editImageView);
     }
 
     @FXML
-    private void applyBlur() {
+    private void onBlur() {
         saveHistory();
         beautyTool.applyBlur(editImageView);
     }
 
+    @FXML
+    private void onBrightness() {
+        saveHistory();
+        beautyTool.applyBrightness(editImageView);
+    }
+
+    @FXML
+    private void onContrast() {
+        saveHistory();
+        beautyTool.applyContrast(editImageView);
+    }
+
+    // ===================== 按钮功能 =====================
     // 点击画笔 → 强制变回黑色
     @FXML
     private void useBrush() {
@@ -118,10 +133,8 @@ public class EditorController {
         if (!drawHistory.isEmpty()) {
             drawPane.getChildren().setAll(drawHistory.pop());
         }
-        editImageView.setEffect(null);
+        beautyTool.clearEffect(editImageView); // 清空美化效果
     }
-
-
 
     // ===================== 绘画 =====================
     @FXML
@@ -145,7 +158,6 @@ public class EditorController {
     @FXML
     private void saveImage() {
         try {
-            // 1. 先合成最终图片（和currentImageFile无关，永远不会空）
             javafx.scene.SnapshotParameters params = new javafx.scene.SnapshotParameters();
             params.setFill(javafx.scene.paint.Color.WHITE);
             javafx.scene.image.Image finalImage = mainEditPane.snapshot(params, null);
@@ -154,14 +166,12 @@ public class EditorController {
                 throw new Exception("合成图片失败，没有可保存的内容");
             }
 
-            // 2. 打开保存窗口，让用户选路径，不依赖currentImageFile
             javafx.stage.FileChooser fileChooser = new javafx.stage.FileChooser();
             fileChooser.setTitle("保存图片");
             fileChooser.getExtensionFilters().add(
                     new javafx.stage.FileChooser.ExtensionFilter("PNG图片", "*.png")
             );
 
-            // 只有currentImageFile不为空时，才设置默认路径和文件名
             if (currentImageFile != null && currentImageFile.getFile() != null && currentImageFile.getFile().getParentFile().exists()) {
                 fileChooser.setInitialDirectory(currentImageFile.getFile().getParentFile());
                 fileChooser.setInitialFileName("edited_" + currentImageFile.getFile().getName().replaceAll("\\.(jpg|jpeg|png)$", ".png"));
@@ -169,32 +179,27 @@ public class EditorController {
                 fileChooser.setInitialFileName("edited_image_" + System.currentTimeMillis() + ".png");
             }
 
-            // 弹出保存窗口，用户取消就直接退出
             java.io.File saveFile = fileChooser.showSaveDialog(btnSave.getScene().getWindow());
             if (saveFile == null) {
                 return;
             }
 
-            // 3. 写入图片到文件
             javax.imageio.ImageIO.write(
                     javafx.embed.swing.SwingFXUtils.fromFXImage(finalImage, null),
                     "png",
                     saveFile
             );
 
-            // 4. 成功提示
             javafx.scene.control.Alert successAlert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
             successAlert.setTitle("保存成功");
             successAlert.setHeaderText("图片已保存");
             successAlert.setContentText("保存路径：" + saveFile.getAbsolutePath());
             successAlert.showAndWait();
 
-            // 5. 只有主控制器和图片都不为空时，才刷新主界面
             if (mainController != null && currentImageFile != null) {
                 mainController.loadDirectoryImages(mainController.getCurrentDir());
             }
 
-            // 6. 关闭窗口
             javafx.stage.Stage stage = (javafx.stage.Stage) btnSave.getScene().getWindow();
             stage.close();
 
