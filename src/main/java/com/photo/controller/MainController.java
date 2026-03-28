@@ -402,15 +402,18 @@ public class MainController implements Initializable {
         });
     }
 
+    // ====================== 在这里修改了样式 ======================
     private void setThumbnailSelected(VBox thumbnailBox, boolean selected) {
         if (selected) {
             if (!selectedThumbnails.contains(thumbnailBox)) {
                 selectedThumbnails.add(thumbnailBox);
-                thumbnailBox.getStyleClass().add("selected");
+                // 选中：蓝色 + 边框加粗
+                thumbnailBox.setStyle("-fx-border-color: #0066ff; -fx-border-width: 2; -fx-border-radius: 3;");
             }
         } else {
             selectedThumbnails.remove(thumbnailBox);
-            thumbnailBox.getStyleClass().remove("selected");
+            // 取消：恢复原样
+            thumbnailBox.setStyle("");
         }
     }
 
@@ -420,10 +423,11 @@ public class MainController implements Initializable {
 
     private void clearAllSelected() {
         for (VBox box : selectedThumbnails) {
-            box.getStyleClass().remove("selected");
+            box.setStyle("");
         }
         selectedThumbnails.clear();
     }
+    // ============================================================
 
     private void bindContextMenu(VBox thumbnailBox) {
         thumbnailBox.setOnContextMenuRequested(e -> {

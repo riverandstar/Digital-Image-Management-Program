@@ -65,6 +65,13 @@
     -fx-alignment: top-center; /* 居中 */
 }
 
+/* 新增：选中状态的样式 */
+.thumbnail-box.selected {
+    -fx-border-width: 2;  /* 边框变粗（原1px → 2px，视觉上粗1px） */
+    -fx-border-color: #3498db; /* 蓝色边框 */
+    -fx-background-color: #f8fbfe; /* 轻微蓝色背景增强选中视觉效果 */
+}
+
 .thumbnail-box ImageView {
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 3, 0, 0, 1);
     -fx-fit-width: 200px;
