@@ -10,28 +10,28 @@
 
 <AnchorPane prefHeight="500" prefWidth="700" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.photo.editor.EditorController">
 
-   <StackPane fx:id="mainEditPane" layoutX="30" layoutY="20" prefHeight="380" prefWidth="640" style="-fx-background-color: #ffffff; -fx-border-color: #cccccc;">
-      <ImageView fx:id="editImageView" fitHeight="380" fitWidth="640" preserveRatio="true" />
-      <AnchorPane fx:id="drawPane" onMouseDragged="#onMouseDragged" onMousePressed="#onMousePressed" onMouseReleased="#onMouseReleased" />
-   </StackPane>
+    <StackPane fx:id="mainEditPane" layoutX="30" layoutY="20" prefHeight="380" prefWidth="640" style="-fx-background-color: #ffffff; -fx-border-color: #cccccc;">
+        <ImageView fx:id="editImageView" fitHeight="380" fitWidth="640" preserveRatio="true" />
+        <AnchorPane fx:id="drawPane" onMouseDragged="#onMouseDragged" onMousePressed="#onMousePressed" onMouseReleased="#onMouseReleased" />
+    </StackPane>
 
-   <HBox alignment="CENTER" layoutX="30" layoutY="420" prefHeight="60" prefWidth="640" spacing="25" style="-fx-background-color: #e0e0e0; -fx-border-color: #999;">
+    <HBox alignment="CENTER" layoutX="30" layoutY="420" prefHeight="60" prefWidth="640" spacing="25" style="-fx-background-color: #e0e0e0; -fx-border-color: #999;">
 
-      <!-- 美化菜单（4个功能：锐化、模糊、亮度、对比度） -->
-      <MenuButton fx:id="menuBeauty" mnemonicParsing="false" prefWidth="100" prefHeight="40" text="美化">
-         <items>
-            <MenuItem fx:id="itemSharpen" mnemonicParsing="false" onAction="#onSharpen" text="锐化" />
-            <MenuItem fx:id="itemBlur" mnemonicParsing="false" onAction="#onBlur" text="模糊" />
-            <MenuItem fx:id="itemBrightness" mnemonicParsing="false" onAction="#onBrightness" text="亮度" />
-            <MenuItem fx:id="itemContrast" mnemonicParsing="false" onAction="#onContrast" text="对比度" />
-         </items>
-      </MenuButton>
+        <!-- 美化菜单（4个功能：锐化、模糊、亮度、对比度） -->
+        <MenuButton fx:id="menuBeauty" mnemonicParsing="false" prefWidth="100" prefHeight="40" text="美化">
+            <items>
+                <MenuItem fx:id="itemSharpen" mnemonicParsing="false" onAction="#onSharpen" text="锐化" />
+                <MenuItem fx:id="itemBlur" mnemonicParsing="false" onAction="#onBlur" text="模糊" />
+                <MenuItem fx:id="itemBrightness" mnemonicParsing="false" onAction="#onBrightness" text="亮度" />
+                <MenuItem fx:id="itemContrast" mnemonicParsing="false" onAction="#onContrast" text="对比度" />
+            </items>
+        </MenuButton>
 
-      <!-- 保留的5个按钮，均匀分布 -->
-      <Button fx:id="btnBrush" onAction="#useBrush" prefHeight="40" prefWidth="90" text="画笔" />
-      <Button fx:id="btnColorCycle" onAction="#nextColor" prefHeight="40" prefWidth="90" text="彩色(红)" />
-      <Button fx:id="btnUndo" onAction="#undoAll" prefHeight="40" prefWidth="90" text="回溯" />
-      <Button fx:id="btnSave" onAction="#saveImage" prefHeight="40" prefWidth="90" text="保存" />
-   </HBox>
+        <!-- 保留的5个按钮，均匀分布 -->
+        <Button fx:id="btnBrush" onAction="#useBrush" prefHeight="40" prefWidth="90" text="画笔" />
+        <Button fx:id="btnColorCycle" onAction="#nextColor" prefHeight="40" prefWidth="90" text="彩色(红)" />
+        <Button fx:id="btnUndo" onAction="#undoAll" prefHeight="40" prefWidth="90" text="回溯" />
+        <Button fx:id="btnSave" onAction="#saveImage" prefHeight="40" prefWidth="90" text="保存" />
+    </HBox>
 
 </AnchorPane>
